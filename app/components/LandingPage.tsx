@@ -102,9 +102,9 @@ export function LandingPage() {
 
   const heroBlurb = useMemo(
     () => [
-      "성별/나이별로 어떤 ‘말’이 움직이는지",
-      "어떤 이유로 ‘선호/불만’이 생기는지",
-      "어디서 ‘확산’되고 있는지",
+      "커뮤니티 인기글에서 키워드를 추출해 흐름을 포착",
+      "실시간 랭킹 1~10 키워드로 즉시 파악",
+      "지금 뜨는 이슈를 한눈에",
     ],
     [],
   );
@@ -146,23 +146,11 @@ export function LandingPage() {
           </Link>
 
           <nav className="hidden items-center gap-6 text-sm text-zinc-700 dark:text-zinc-300 sm:flex">
-            <a href="#features" className="hover:text-zinc-950 dark:hover:text-zinc-50">
-              기능
-            </a>
-            <a href="#demo" className="hover:text-zinc-950 dark:hover:text-zinc-50">
-              데모
-            </a>
-            <a href="#pricing" className="hover:text-zinc-950 dark:hover:text-zinc-50">
-              가격
-            </a>
-            <a href="#faq" className="hover:text-zinc-950 dark:hover:text-zinc-50">
-              FAQ
-            </a>
             <Link
               href="/keywords"
               className="hover:text-zinc-950 dark:hover:text-zinc-50"
             >
-              키워드보기
+              키워드 보기
             </Link>
           </nav>
 
@@ -215,20 +203,20 @@ export function LandingPage() {
               <div>
                 <Reveal delayMs={80}>
                   <h1 className="text-4xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-5xl">
-                    인터넷상의 데이터로
+                    커뮤니티 인기글로 읽는
                     <span className="block">
                       <span className="bg-gradient-to-r from-indigo-600 via-emerald-500 to-rose-500 bg-clip-text text-transparent shimmer">
-                        성별/나이별 ‘생각’
+                        실시간 키워드 랭킹 1~10
                       </span>
-                      을 보여주는 서비스
+                      으로 보는 지금의 흐름
                     </span>
                   </h1>
                 </Reveal>
 
                 <Reveal delayMs={140}>
                   <p className="mt-5 max-w-xl text-base leading-7 text-zinc-600 dark:text-zinc-400">
-                    MODU Trend는 웹 상의 발화(키워드/맥락)를 수집·요약해 세그먼트별 반응 차이를 빠르게 이해하도록 돕습니다.
-                    기획, 마케팅, 리서치, 제품 개선 의사결정에 바로 연결하세요.
+                    사람들의 속마음이 잘 드러나는 커뮤니티의 인기글에서 키워드를 추출해,
+                    지금 떠오르는 이슈를 랭킹 1~10으로 빠르게 파악하세요.
                   </p>
                 </Reveal>
 
@@ -315,14 +303,14 @@ export function LandingPage() {
               <div>
                 <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Demo</div>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-3xl">
-                  클릭해보면 바로 체감돼요
+                  열면 바로 보이는 실시간 랭킹
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  성별/나이 탭과 주제를 바꾸면, 요약/키워드/감성/지표가 즉시 변경됩니다.
+                  커뮤니티 인기글에서 추출된 키워드의 실시간 랭킹 1~10을 바로 확인하세요.
                 </p>
               </div>
               <a
-                href="#pricing"
+                href="/keywords"
                 className="hidden sm:inline-flex h-10 items-center justify-center rounded-full border border-black/10 bg-white/70 px-4 text-sm font-semibold text-zinc-900 shadow-sm transition hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:hover:bg-black/55"
               >
                 시작하기
@@ -351,99 +339,29 @@ export function LandingPage() {
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
             <Reveal delayMs={60}>
               <FeatureCard
-                title="세그먼트별 요약"
-                desc="같은 주제라도 성별/나이별로 달라지는 관심과 맥락을 압축해서 보여줍니다."
+                title="인기글 기반 키워드 추출"
+                desc="커뮤니티에서 많이 본 글을 바탕으로 핵심 키워드를 뽑아 흐름을 잡습니다."
                 accent="indigo"
               />
             </Reveal>
             <Reveal delayMs={120}>
               <FeatureCard
-                title="키워드 + 감성 변화"
-                desc="상위 키워드와 긍정/중립/부정 비율로 반응의 결을 빠르게 파악합니다."
+                title="실시간 반영"
+                desc="인기글의 흐름 변화를 빠르게 반영해 최신 랭킹을 보여줍니다."
                 accent="emerald"
               />
             </Reveal>
             <Reveal delayMs={180}>
               <FeatureCard
-                title="확산 신호 지표"
-                desc="관심도·확산속도·전환가능성 같은 신호로 다음 액션 우선순위를 세웁니다."
+                title="실시간 키워드 랭킹 1~10"
+                desc="지금 뜨는 키워드를 순위로 보여주어 우선순위를 빠르게 판단합니다."
                 accent="rose"
               />
             </Reveal>
           </div>
         </section>
 
-        <section id="pricing" className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-18">
-          <Reveal>
-            <div className="flex items-end justify-between gap-6">
-              <div>
-                <div className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Pricing</div>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-3xl">
-                  팀 규모에 맞게 시작
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-                  (지금은 랜딩/프로토타입 UI입니다) 실제 요금제는 데이터량/채널 수/기능 범위에 맞춰 조정할 수 있어요.
-                </p>
-              </div>
-            </div>
-          </Reveal>
-
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            {[
-              { name: "Starter", price: "₩0", desc: "개인/검증용", cta: "무료로 시작", hot: false },
-              { name: "Team", price: "상담", desc: "팀 협업/공유", cta: "데모 요청", hot: true },
-              { name: "Enterprise", price: "상담", desc: "대규모 데이터/보안", cta: "문의하기", hot: false },
-            ].map((p, idx) => (
-              <Reveal key={p.name} delayMs={80 + idx * 60}>
-                <div
-                  className={[
-                    "surface noise rounded-2xl p-6 transition-all",
-                    p.hot ? "ring-1 ring-indigo-500/30" : "",
-                    "hover:-translate-y-0.5 hover:shadow-xl",
-                  ].join(" ")}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-base font-semibold text-zinc-950 dark:text-zinc-50">{p.name}</div>
-                    {p.hot ? (
-                      <span className="rounded-full bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white">
-                        추천
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="mt-4 text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-                    {p.price}
-                    <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400"> / 월</span>
-                  </div>
-                  <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{p.desc}</div>
-                  <ul className="mt-5 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
-                    <li className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-indigo-500/70" /> 주제/세그먼트 비교
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500/70" /> 키워드/감성 요약
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-rose-500/70" /> 공유용 리포트
-                    </li>
-                  </ul>
-                  <div className="mt-6">
-                    <Link
-                      href="/signup"
-                      className={[
-                        "inline-flex h-11 w-full items-center justify-center rounded-full px-5 text-sm font-semibold shadow-sm transition",
-                        p.hot
-                          ? "bg-indigo-600 text-white hover:bg-indigo-500"
-                          : "border border-black/10 bg-white/70 text-zinc-900 hover:bg-white hover:shadow-md dark:border-white/10 dark:bg-black/40 dark:text-zinc-100 dark:hover:bg-black/55",
-                      ].join(" ")}
-                    >
-                      {p.cta}
-                    </Link>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </section>
+        {/* pricing section removed */}
 
         <section id="faq" className="mx-auto w-full max-w-6xl px-4 py-14 sm:px-6 sm:py-18">
           <Reveal>
