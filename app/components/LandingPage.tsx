@@ -95,6 +95,34 @@ function Stat({
   );
 }
 
+/** 프로토타입용 정적 미니 스파크라인 (최근 검색량 추이 시각화) */
+function DemoSearchVolumeSparkline() {
+  const w = 280;
+  const h = 52;
+  const pad = 4;
+  const pts = [34, 40, 36, 48, 44, 56, 51, 63, 58, 69, 64, 72];
+  const min = Math.min(...pts);
+  const max = Math.max(...pts);
+  const range = Math.max(max - min, 1e-6);
+  const xFor = (i: number) => pad + (i / (pts.length - 1)) * (w - pad * 2);
+  const yFor = (v: number) => pad + (1 - (v - min) / range) * (h - pad * 2);
+  const line = pts.map((v, i) => `${i === 0 ? "M" : "L"} ${xFor(i).toFixed(1)} ${yFor(v).toFixed(1)}`).join(" ");
+  const area = `${line} L ${xFor(pts.length - 1).toFixed(1)} ${(h - pad).toFixed(1)} L ${xFor(0).toFixed(1)} ${(h - pad).toFixed(1)} Z`;
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-14 w-full" aria-hidden>
+      <defs>
+        <linearGradient id="landingSparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgba(99,102,241,0.28)" />
+          <stop offset="100%" stopColor="rgba(99,102,241,0.02)" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#landingSparkFill)" />
+      <path d={line} fill="none" stroke="rgba(99,102,241,0.9)" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function LandingPage() {
   const y = useScrollY();
   const scrolled = y > 16;
@@ -268,25 +296,43 @@ export function LandingPage() {
                         <div className="text-xs text-zinc-600 dark:text-zinc-400">프로토타입</div>
                       </div>
                       <div className="mt-3 grid gap-3">
-                        <div className="h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
-                          <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-indigo-500/70 via-emerald-400/50 to-rose-400/55 shimmer" />
+                        <div className="text-[11px] leading-4 text-zinc-500 dark:text-zinc-400">
+                          키워드 감성 분포
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div className="rounded-xl border border-black/5 bg-white/70 p-3 dark:border-white/10 dark:bg-black/35">
-                            <div className="text-xs text-zinc-600 dark:text-zinc-400">관심도</div>
-                            <div className="mt-1 text-lg font-semibold tabular-nums">78</div>
+                        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                          <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.06] p-3 dark:border-emerald-500/20 dark:bg-emerald-500/[0.08]">
+                            <div className="text-xs text-emerald-700 dark:text-emerald-400">긍정</div>
+                            <div className="mt-1 text-lg font-semibold tabular-nums text-emerald-900 dark:text-emerald-100">
+                              42%
+                            </div>
                           </div>
-                          <div className="rounded-xl border border-black/5 bg-white/70 p-3 dark:border-white/10 dark:bg-black/35">
-                            <div className="text-xs text-zinc-600 dark:text-zinc-400">확산</div>
-                            <div className="mt-1 text-lg font-semibold tabular-nums">64</div>
+                          <div className="rounded-xl border border-slate-400/15 bg-slate-400/[0.06] p-3 dark:border-slate-400/20 dark:bg-slate-400/[0.08]">
+                            <div className="text-xs text-slate-600 dark:text-slate-400">중립</div>
+                            <div className="mt-1 text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
+                              38%
+                            </div>
                           </div>
-                          <div className="rounded-xl border border-black/5 bg-white/70 p-3 dark:border-white/10 dark:bg-black/35">
-                            <div className="text-xs text-zinc-600 dark:text-zinc-400">부정</div>
-                            <div className="mt-1 text-lg font-semibold tabular-nums">21%</div>
+                          <div className="rounded-xl border border-rose-500/15 bg-rose-500/[0.06] p-3 dark:border-rose-500/20 dark:bg-rose-500/[0.08]">
+                            <div className="text-xs text-rose-700 dark:text-rose-400">부정</div>
+                            <div className="mt-1 text-lg font-semibold tabular-nums text-rose-900 dark:text-rose-100">
+                              20%
+                            </div>
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-black/5 bg-white/70 p-3 dark:border-white/10 dark:bg-black/35">
+                          <div className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                            최근 검색량 추이
+                          </div>
+                          <div className="mt-2">
+                            <DemoSearchVolumeSparkline />
+                          </div>
+                          <div className="mt-1.5 flex justify-between text-[10px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                            <span>지난 구간</span>
+                            <span>→ 최근</span>
                           </div>
                         </div>
                         <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-xs leading-5 text-zinc-600 dark:border-white/10 dark:bg-black/35 dark:text-zinc-400">
-                          세그먼트를 바꿔가며 “왜” 반응이 갈리는지 확인해보세요.
+                          분석 화면에서 키워드별 감성(긍정·중립·부정)과 네이버 검색 트렌드를 함께 볼 수 있어요.
                         </div>
                       </div>
                     </div>
