@@ -3,36 +3,123 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type PostsSearchResponse = unknown;
+type SearchAnalysisResponse = {
+  keyword: string;
+  group: string;
+  age: number;
+  window_minutes: number;
+  matched_posts: number;
+  analyzed_posts: number;
+  positive_pct: number;
+  neutral_pct: number;
+  negative_pct: number;
+};
 
-function extractPosts(payload: unknown): unknown[] {
-  if (!payload) return [];
-  if (Array.isArray(payload)) return payload as unknown[];
-  if (typeof payload !== "object") return [];
-  const obj = payload as Record<string, unknown>;
-  const candidates = [obj.items, obj.posts, obj.results, obj.data];
-  for (const c of candidates) {
-    if (Array.isArray(c)) return c;
-  }
-  return [];
-}
-
-function postTitle(p: unknown): string {
-  if (!p || typeof p !== "object") return "Untitled";
-  const o = p as Record<string, unknown>;
+function isSearchAnalysisResponse(x: unknown): x is SearchAnalysisResponse {
+  if (!x || typeof x !== "object") return false;
+  const o = x as Record<string, unknown>;
   return (
-    (typeof o.title === "string" && o.title) ||
-    (typeof o.subject === "string" && o.subject) ||
-    (typeof o.name === "string" && o.name) ||
-    "Untitled"
+    typeof o.keyword === "string" &&
+    typeof o.group === "string" &&
+    typeof o.age === "number" &&
+    typeof o.window_minutes === "number" &&
+    typeof o.matched_posts === "number" &&
+    typeof o.analyzed_posts === "number" &&
+    typeof o.positive_pct === "number" &&
+    typeof o.neutral_pct === "number" &&
+    typeof o.negative_pct === "number"
   );
 }
 
-function postUrl(p: unknown): string | null {
-  if (!p || typeof p !== "object") return null;
-  const o = p as Record<string, unknown>;
-  const u = o.url ?? o.link ?? o.href;
-  return typeof u === "string" && u ? u : null;
+function clampPct(v: number) {
+  if (!Number.isFinite(v)) return 0;
+  return Math.max(0, Math.min(100, v));
+}
+
+function DonutChart({
+  positive,
+  neutral,
+  negative,
+}: {
+  positive: number;
+  neutral: number;
+  negative: number;
+}) {
+  const p = clampPct(positive);
+  const n = clampPct(neutral);
+  const ng = clampPct(negative);
+
+  const total = p + n + ng;
+  const pNorm = total > 0 ? (p / total) * 100 : 0;
+  const nNorm = total > 0 ? (n / total) * 100 : 0;
+  const ngNorm = total > 0 ? (ng / total) * 100 : 0;
+
+  const r = 44;
+  const c = 2 * Math.PI * r;
+
+  const pLen = (pNorm / 100) * c;
+  const nLen = (nNorm / 100) * c;
+  const ngLen = (ngNorm / 100) * c;
+
+  const stroke = 12;
+
+  return (
+    <svg viewBox="0 0 120 120" className="h-40 w-40">
+      <circle
+        cx="60"
+        cy="60"
+        r={r}
+        fill="none"
+        stroke="rgba(0,0,0,0.08)"
+        strokeWidth={stroke}
+        className="dark:stroke-white/10"
+      />
+
+      <g transform="rotate(-90 60 60)">
+        <circle
+          cx="60"
+          cy="60"
+          r={r}
+          fill="none"
+          stroke="rgba(16,185,129,0.85)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${pLen} ${c - pLen}`}
+          strokeDashoffset={0}
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r={r}
+          fill="none"
+          stroke="rgba(148,163,184,0.9)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${nLen} ${c - nLen}`}
+          strokeDashoffset={-pLen}
+        />
+        <circle
+          cx="60"
+          cy="60"
+          r={r}
+          fill="none"
+          stroke="rgba(244,63,94,0.85)"
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={`${ngLen} ${c - ngLen}`}
+          strokeDashoffset={-(pLen + nLen)}
+        />
+      </g>
+
+      <circle cx="60" cy="60" r={r - stroke / 2} fill="rgba(255,255,255,0.75)" className="dark:fill-black/35" />
+      <text x="60" y="56" textAnchor="middle" className="fill-zinc-900 text-[10px] font-semibold dark:fill-zinc-50">
+        Sentiment
+      </text>
+      <text x="60" y="72" textAnchor="middle" className="fill-zinc-600 text-[9px] dark:fill-zinc-300">
+        {total > 0 ? "100%" : "0%"}
+      </text>
+    </svg>
+  );
 }
 
 export function AnalysisClient({
@@ -83,7 +170,7 @@ export function AnalysisClient({
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [payload, setPayload] = useState<PostsSearchResponse | null>(null);
+  const [payload, setPayload] = useState<SearchAnalysisResponse | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -115,7 +202,10 @@ export function AnalysisClient({
           `요청에 실패했습니다. (${res.status} ${res.statusText})`;
         throw new Error(msg);
       }
-      setPayload(data as PostsSearchResponse);
+      if (!isSearchAnalysisResponse(data)) {
+        throw new Error("API 응답 형식이 예상과 다릅니다.");
+      }
+      setPayload(data);
     } catch (e) {
       setPayload(null);
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
@@ -128,8 +218,6 @@ export function AnalysisClient({
     if (!safeKeyword) return;
     void load();
   }, [load]);
-
-  const posts = extractPosts(payload);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(1200px_circle_at_15%_10%,rgba(99,102,241,0.12),transparent_55%),radial-gradient(900px_circle_at_85%_30%,rgba(16,185,129,0.10),transparent_55%)] dark:bg-[radial-gradient(1200px_circle_at_15%_10%,rgba(99,102,241,0.14),transparent_55%),radial-gradient(900px_circle_at_85%_30%,rgba(16,185,129,0.10),transparent_55%)]">
@@ -197,41 +285,88 @@ export function AnalysisClient({
 
         {!loading && !error ? (
           <div className="surface noise mt-8 rounded-2xl p-5 sm:p-6">
-            {posts.length === 0 ? (
-              <p className="text-sm text-zinc-600 dark:text-zinc-400">결과가 없습니다.</p>
+            {!payload ? (
+              <p className="text-sm text-zinc-600 dark:text-zinc-400">표시할 데이터가 없습니다.</p>
             ) : (
-              <ul className="space-y-3">
-                {posts.map((p, i) => {
-                  const title = postTitle(p);
-                  const url = postUrl(p);
-                  return (
-                    <li
-                      key={`post-${i}`}
-                      className="rounded-xl border border-black/5 bg-white/50 px-4 py-3 dark:border-white/10 dark:bg-black/25"
-                    >
-                      <div className="flex flex-col gap-1">
-                        {url ? (
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="line-clamp-2 text-sm font-semibold text-zinc-950 hover:underline hover:decoration-indigo-500/60 hover:underline-offset-4 dark:text-zinc-50"
-                          >
-                            {title}
-                          </a>
-                        ) : (
-                          <div className="line-clamp-2 text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-                            {title}
+              <div className="grid gap-6 lg:grid-cols-5">
+                <div className="lg:col-span-2">
+                  <div className="rounded-2xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-black/30">
+                    <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                      감성 비율
+                    </div>
+                    <div className="mt-4 flex items-center gap-5">
+                      <DonutChart
+                        positive={payload.positive_pct}
+                        neutral={payload.neutral_pct}
+                        negative={payload.negative_pct}
+                      />
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
+                            <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/80" />
+                            긍정
                           </div>
-                        )}
-                        {url ? (
-                          <div className="truncate text-xs text-zinc-500 dark:text-zinc-400">{url}</div>
-                        ) : null}
+                          <div className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                            {payload.positive_pct.toFixed(1)}%
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
+                            <span className="h-2.5 w-2.5 rounded-full bg-slate-400/90" />
+                            중립
+                          </div>
+                          <div className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                            {payload.neutral_pct.toFixed(1)}%
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-2 text-zinc-700 dark:text-zinc-200">
+                            <span className="h-2.5 w-2.5 rounded-full bg-rose-500/80" />
+                            부정
+                          </div>
+                          <div className="font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
+                            {payload.negative_pct.toFixed(1)}%
+                          </div>
+                        </div>
                       </div>
-                    </li>
-                  );
-                })}
-              </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-3">
+                  <div className="rounded-2xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-black/30">
+                    <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
+                      분석 요약
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
+                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">키워드</div>
+                        <div className="mt-1 font-semibold text-zinc-950 dark:text-zinc-50">
+                          {payload.keyword}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
+                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">대상</div>
+                        <div className="mt-1 font-semibold text-zinc-950 dark:text-zinc-50">
+                          {payload.group} · {payload.age}대
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
+                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">윈도우(분)</div>
+                        <div className="mt-1 font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
+                          {payload.window_minutes}
+                        </div>
+                      </div>
+                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
+                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">매칭/분석 게시글</div>
+                        <div className="mt-1 font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
+                          {payload.matched_posts} / {payload.analyzed_posts}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         ) : null}
