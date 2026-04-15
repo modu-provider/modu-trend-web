@@ -97,7 +97,7 @@ export function AnalysisClient({
         group: safeGroup,
         age: String(safeAge),
         limit: "10",
-        minutes: "200",
+        minutes: "2000",
       }).toString();
 
       const headers: HeadersInit = { accept: "application/json" };
