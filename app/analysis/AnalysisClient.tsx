@@ -44,9 +44,31 @@ export function AnalysisClient({
   group: string;
   age: number;
 }) {
-  const safeKeyword = useMemo(() => (keyword ?? "").trim(), [keyword]);
-  const safeGroup = useMemo(() => (group ?? "female").trim() || "female", [group]);
-  const safeAge = useMemo(() => age || 20, [age]);
+  const [effectiveKeyword, setEffectiveKeyword] = useState<string>((keyword ?? "").trim());
+  const [effectiveGroup, setEffectiveGroup] = useState<string>(
+    (group ?? "female").trim() || "female",
+  );
+  const [effectiveAge, setEffectiveAge] = useState<number>(age || 20);
+
+  // If this page was prerendered without query, hydrate from the real URL.
+  useEffect(() => {
+    const fromUrl = new URLSearchParams(window.location.search);
+    const k = (fromUrl.get("keyword") ?? "").trim();
+    const g = (fromUrl.get("group") ?? "").trim();
+    const a = Number(fromUrl.get("age") ?? "") || 0;
+
+    if (k && k !== effectiveKeyword) setEffectiveKeyword(k);
+    if (g && g !== effectiveGroup) setEffectiveGroup(g);
+    if (a && a !== effectiveAge) setEffectiveAge(a);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const safeKeyword = useMemo(() => (effectiveKeyword ?? "").trim(), [effectiveKeyword]);
+  const safeGroup = useMemo(
+    () => (effectiveGroup ?? "female").trim() || "female",
+    [effectiveGroup],
+  );
+  const safeAge = useMemo(() => effectiveAge || 20, [effectiveAge]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
