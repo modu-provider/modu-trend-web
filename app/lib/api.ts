@@ -4,6 +4,14 @@ export type ApiErrorShape = {
   statusCode?: number;
 };
 
+function getApiBase() {
+  const envBase = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  if (envBase) return envBase;
+  // Dev-friendly default when env is not configured.
+  if (typeof window !== "undefined") return "http://localhost:8000";
+  return "";
+}
+
 function joinUrl(base: string, path: string) {
   if (!base) return path;
   const b = base.endsWith("/") ? base.slice(0, -1) : base;
@@ -41,7 +49,7 @@ export async function apiPost<TResponse>(
     headers?: HeadersInit;
   },
 ): Promise<TResponse> {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  const base = getApiBase();
   const url = joinUrl(base, path);
 
   const { headers: initHeaders, ...restInit } = init ?? {};
@@ -74,7 +82,7 @@ export async function apiGet<TResponse>(
   params?: Record<string, string | number>,
   init?: Omit<RequestInit, "method" | "headers"> & { headers?: HeadersInit },
 ): Promise<TResponse> {
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  const base = getApiBase();
   const urlPath = path.startsWith("/") ? path : `/${path}`;
   const qs =
     params && Object.keys(params).length > 0
