@@ -11,9 +11,17 @@ function fmtDate(d: Date) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const keyword = (searchParams.get("keyword") ?? "").trim();
+export async function POST(req: Request) {
+  let keyword = "";
+  try {
+    const body = (await req.json()) as unknown;
+    if (body && typeof body === "object") {
+      const k = (body as any).keyword;
+      if (typeof k === "string") keyword = k.trim();
+    }
+  } catch {
+    // ignore
+  }
   if (!keyword) return jsonError("keyword is required");
 
   const clientId = process.env.NAVER_CLIENT_ID;
@@ -26,7 +34,7 @@ export async function GET(req: Request) {
   const start = new Date(end);
   start.setMonth(start.getMonth() - 1);
 
-  const body = {
+  const upstreamBody = {
     startDate: fmtDate(start),
     endDate: fmtDate(end),
     timeUnit: "date",
@@ -45,7 +53,7 @@ export async function GET(req: Request) {
       "X-Naver-Client-Id": clientId,
       "X-Naver-Client-Secret": clientSecret,
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(upstreamBody),
   });
 
   const text = await upstream.text();
