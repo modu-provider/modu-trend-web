@@ -79,9 +79,6 @@ export default function KeywordsPage() {
           키워드 랭킹
         </h1>
         <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-          <code className="rounded bg-black/5 px-1.5 py-0.5 text-xs dark:bg-white/10">
-            GET /rankings?group=&amp;age=
-          </code>{" "}
           결과를 성별·연령별로 조회합니다.
         </p>
 
