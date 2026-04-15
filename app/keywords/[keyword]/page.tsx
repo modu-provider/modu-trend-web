@@ -66,7 +66,7 @@ export default function KeywordDetailPage({
       if (!keyword) {
         throw new Error("keyword 파라미터가 비어있습니다.");
       }
-      const res = await apiGet<PostsSearchResponse>("/posts/search", {
+      const res = await apiGet<PostsSearchResponse>("/api/posts/search", {
         keyword,
         group,
         age,
@@ -121,7 +121,7 @@ export default function KeywordDetailPage({
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
               <code className="rounded bg-black/5 px-1.5 py-0.5 text-xs dark:bg-white/10">
-                GET /posts/search?keyword=&amp;group=&amp;age=&amp;limit=&amp;minutes=
+                GET /api/posts/search?keyword=&amp;group=&amp;age=&amp;limit=&amp;minutes=
               </code>{" "}
               결과를 불러옵니다. (group={group}, age={age})
             </p>
