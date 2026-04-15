@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiGet } from "../../lib/api";
 
 type PostsSearchResponse = unknown;
 
@@ -66,14 +65,30 @@ export default function KeywordDetailPage({
       if (!keyword) {
         throw new Error("keyword 파라미터가 비어있습니다.");
       }
-      const res = await apiGet<PostsSearchResponse>("/api/posts/search", {
+      const qs = new URLSearchParams({
         keyword,
         group,
-        age,
-        limit: 10,
-        minutes: 200,
-      });
-      setPayload(res);
+        age: String(age),
+        limit: "10",
+        minutes: "200",
+      }).toString();
+
+      const headers: HeadersInit = { accept: "application/json" };
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const res = await fetch(`/api/posts/search?${qs}`, { method: "GET", headers });
+      const text = await res.text();
+      const data = text ? (JSON.parse(text) as unknown) : null;
+      if (!res.ok) {
+        const maybe = (data ?? {}) as { message?: string; error?: string };
+        const msg =
+          maybe.message ||
+          maybe.error ||
+          `요청에 실패했습니다. (${res.status} ${res.statusText})`;
+        throw new Error(msg);
+      }
+      setPayload(data as PostsSearchResponse);
     } catch (e) {
       setPayload(null);
       setError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
