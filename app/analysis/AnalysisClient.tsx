@@ -315,7 +315,7 @@ export function AnalysisClient({
     setTrend(null);
     try {
       if (!safeKeyword) throw new Error("keyword 파라미터가 비어있습니다.");
-      const res = await fetch(`/api/naver/datalab?keyword=${encodeURIComponent(safeKeyword)}`, {
+      const res = await fetch(`/api/naver/datalab/search?keyword=${encodeURIComponent(safeKeyword)}`, {
         method: "GET",
         headers: { accept: "application/json" },
       });
