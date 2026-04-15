@@ -181,14 +181,9 @@ export default function KeywordsPage() {
                         {idx + 1}
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="min-w-0 truncate text-left font-medium text-zinc-950 dark:text-zinc-50">
-                            {item.keyword}
-                          </span>
-                          <span className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-                            {item.count}
-                          </span>
-                        </div>
+                        <span className="block min-w-0 truncate text-left font-medium text-zinc-950 dark:text-zinc-50">
+                          {item.keyword}
+                        </span>
                         <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
                           <div
                             className="h-full rounded-full bg-gradient-to-r from-indigo-500/80 to-emerald-500/60 transition-[width] duration-500"
