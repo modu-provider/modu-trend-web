@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 
 type SearchAnalysisResponse = {
   keyword: string;
@@ -140,11 +140,44 @@ function DonutChart({
   );
 }
 
+function formatTrendRatio(v: number) {
+  if (!Number.isFinite(v)) return "—";
+  const a = Math.abs(v);
+  if (a >= 100) return Math.round(v).toString();
+  if (a >= 10) return v.toFixed(1);
+  return v.toFixed(2);
+}
+
+function formatXPeriod(period: string) {
+  const s = (period ?? "").trim();
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (iso) return `${iso[2]}.${iso[3]}`;
+  const compact = /^(\d{4})(\d{2})(\d{2})$/.exec(s);
+  if (compact) return `${compact[2]}.${compact[3]}`;
+  return s.length > 10 ? `${s.slice(0, 10)}…` : s;
+}
+
+/** Evenly pick indices so x-axis labels stay readable when there are many points. */
+function xTickIndices(len: number, maxLabels: number): number[] {
+  if (len <= 0) return [];
+  if (len === 1) return [0];
+  const cap = Math.min(maxLabels, len);
+  if (len <= cap) return Array.from({ length: len }, (_, i) => i);
+  const raw = Array.from({ length: cap }, (_, j) =>
+    Math.round((j / (cap - 1)) * (len - 1)),
+  );
+  return [...new Set(raw)].sort((a, b) => a - b);
+}
+
 function TrendChart({ points }: { points: { period: string; ratio: number }[] }) {
+  const gradientId = useId().replace(/:/g, "");
   const width = 640;
-  const height = 220;
-  const padX = 10;
-  const padY = 16;
+  const height = 248;
+  const padLeft = 44;
+  const padRight = 12;
+  const padTop = 16;
+  const padXAxis = 28;
+  const innerBottom = height - padXAxis;
 
   const clean = points
     .filter((p) => typeof p.period === "string" && Number.isFinite(p.ratio))
@@ -162,18 +195,31 @@ function TrendChart({ points }: { points: { period: string; ratio: number }[] })
   const max = Math.max(...clean.map((d) => d.ratio));
   const range = Math.max(max - min, 1e-6);
 
+  const innerLeft = padLeft;
+  const innerRight = width - padRight;
+  const innerW = innerRight - innerLeft;
+  const innerH = innerBottom - padTop;
+
   const xFor = (i: number) =>
-    padX + (i / Math.max(clean.length - 1, 1)) * (width - padX * 2);
+    innerLeft + (i / Math.max(clean.length - 1, 1)) * innerW;
   const yFor = (v: number) =>
-    padY + (1 - (v - min) / range) * (height - padY * 2);
+    padTop + (1 - (v - min) / range) * innerH;
+
+  const yTickCount = 5;
+  const yTicks =
+    min === max
+      ? [min]
+      : Array.from({ length: yTickCount }, (_, i) => min + (i / (yTickCount - 1)) * (max - min));
+
+  const xTicks = xTickIndices(clean.length, 7);
 
   const path = clean
     .map((d, i) => `${i === 0 ? "M" : "L"} ${xFor(i).toFixed(2)} ${yFor(d.ratio).toFixed(2)}`)
     .join(" ");
 
-  const area = `${path} L ${xFor(clean.length - 1).toFixed(2)} ${(height - padY).toFixed(
+  const area = `${path} L ${xFor(clean.length - 1).toFixed(2)} ${innerBottom.toFixed(
     2,
-  )} L ${xFor(0).toFixed(2)} ${(height - padY).toFixed(2)} Z`;
+  )} L ${xFor(0).toFixed(2)} ${innerBottom.toFixed(2)} Z`;
 
   const firstLabel = clean[0]?.period ?? "";
   const lastLabel = clean[clean.length - 1]?.period ?? "";
@@ -190,13 +236,39 @@ function TrendChart({ points }: { points: { period: string; ratio: number }[] })
       <div className="mt-3 overflow-hidden rounded-xl border border-black/5 bg-white/70 dark:border-white/10 dark:bg-black/35">
         <svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
           <defs>
-            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="rgba(99,102,241,0.35)" />
               <stop offset="100%" stopColor="rgba(99,102,241,0.02)" />
             </linearGradient>
           </defs>
 
-          <path d={area} fill="url(#trendFill)" />
+          <path d={area} fill={`url(#${gradientId})`} />
+
+          <line
+            x1={innerLeft}
+            y1={innerBottom}
+            x2={innerRight}
+            y2={innerBottom}
+            stroke="currentColor"
+            className="text-zinc-300/90 dark:text-zinc-600/90"
+            strokeWidth="1"
+            vectorEffect="non-scaling-stroke"
+          />
+
+          {yTicks.map((tv) => (
+            <line
+              key={`ygrid-${tv}`}
+              x1={innerLeft}
+              y1={yFor(tv)}
+              x2={innerRight}
+              y2={yFor(tv)}
+              stroke="currentColor"
+              className="text-zinc-300/80 dark:text-zinc-600/80"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
+          ))}
+
           <path d={path} fill="none" stroke="rgba(99,102,241,0.9)" strokeWidth="3" />
 
           {clean.map((d, i) => (
@@ -208,6 +280,43 @@ function TrendChart({ points }: { points: { period: string; ratio: number }[] })
               fill="rgba(16,185,129,0.9)"
             />
           ))}
+
+          {yTicks.map((tv) => (
+            <text
+              key={`ylabel-${tv}`}
+              x={innerLeft - 8}
+              y={yFor(tv)}
+              textAnchor="end"
+              dominantBaseline="middle"
+              className="fill-zinc-500 text-[10px] tabular-nums dark:fill-zinc-400"
+            >
+              {formatTrendRatio(tv)}
+            </text>
+          ))}
+
+          {xTicks.map((i) => {
+            const label = formatXPeriod(clean[i]?.period ?? "");
+            const anchor =
+              clean.length === 1
+                ? "middle"
+                : i === 0
+                  ? "start"
+                  : i === clean.length - 1
+                    ? "end"
+                    : "middle";
+            return (
+              <text
+                key={`xlabel-${i}`}
+                x={xFor(i)}
+                y={innerBottom + padXAxis / 2}
+                textAnchor={anchor}
+                dominantBaseline="middle"
+                className="fill-zinc-500 text-[10px] tabular-nums dark:fill-zinc-400"
+              >
+                {label}
+              </text>
+            );
+          })}
         </svg>
       </div>
     </div>
