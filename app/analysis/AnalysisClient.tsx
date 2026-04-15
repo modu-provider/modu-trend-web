@@ -315,9 +315,13 @@ export function AnalysisClient({
     setTrend(null);
     try {
       if (!safeKeyword) throw new Error("keyword 파라미터가 비어있습니다.");
+      const headers: HeadersInit = { accept: "application/json", "Content-Type": "application/json" };
+      const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+      if (token) headers.Authorization = `Bearer ${token}`;
+
       const res = await fetch(`/api/naver/datalab/search`, {
         method: "POST",
-        headers: { accept: "application/json", "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({ keyword: safeKeyword }),
       });
       const text = await res.text();
