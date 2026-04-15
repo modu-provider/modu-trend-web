@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { apiGet } from "../lib/api";
 
 type RankingsResponse = {
@@ -62,6 +62,8 @@ export default function KeywordsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const postsSectionRef = useRef<HTMLElement | null>(null);
+
   const [selectedKeyword, setSelectedKeyword] = useState<string | null>(null);
   const [postsLoading, setPostsLoading] = useState(false);
   const [postsError, setPostsError] = useState<string | null>(null);
@@ -86,6 +88,7 @@ export default function KeywordsPage() {
       setSelectedKeyword(keyword);
       setPostsLoading(true);
       setPostsError(null);
+      postsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       try {
         const res = await apiGet<PostsSearchResponse>("/posts/search", {
           keyword,
@@ -239,7 +242,32 @@ export default function KeywordsPage() {
                 표시할 키워드가 없습니다.
               </p>
             ) : (
-              <ul className="mt-4 space-y-3">
+              <>
+                {selectedKeyword ? (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-black/5 bg-white/60 px-3 py-2 text-xs text-zinc-700 dark:border-white/10 dark:bg-black/30 dark:text-zinc-300">
+                    <div className="min-w-0 truncate">
+                      선택됨:{" "}
+                      <span className="font-semibold text-indigo-700 dark:text-indigo-300">
+                        {selectedKeyword}
+                      </span>
+                    </div>
+                    <div className="shrink-0">
+                      {postsLoading ? (
+                        <span className="font-medium">게시글 불러오는 중…</span>
+                      ) : postsError ? (
+                        <span className="font-medium text-rose-700 dark:text-rose-300">
+                          {postsError}
+                        </span>
+                      ) : (
+                        <span className="font-medium">
+                          {posts.length}개 결과
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+
+                <ul className="mt-4 space-y-3">
                 {data.items.map((item, idx) => (
                   <li
                     key={`${item.keyword}-${idx}`}
@@ -254,7 +282,7 @@ export default function KeywordsPage() {
                           type="button"
                           onClick={() => void loadPosts(item.keyword)}
                           className={[
-                            "min-w-0 truncate text-left font-medium transition",
+                            "min-w-0 truncate text-left font-medium transition cursor-pointer",
                             "hover:underline hover:decoration-indigo-500/60 hover:underline-offset-4",
                             selectedKeyword === item.keyword
                               ? "text-indigo-700 dark:text-indigo-300"
@@ -279,12 +307,13 @@ export default function KeywordsPage() {
                     </div>
                   </li>
                 ))}
-              </ul>
+                </ul>
+              </>
             )}
           </div>
         ) : null}
 
-        <section className="mt-8">
+        <section ref={postsSectionRef} className="mt-8">
           <div className="surface noise rounded-2xl p-5 sm:p-6">
             <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-black/5 pb-4 dark:border-white/10">
               <div className="text-lg font-semibold text-zinc-950 dark:text-zinc-50">
