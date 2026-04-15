@@ -44,11 +44,22 @@ export function AnalysisClient({
   group: string;
   age: number;
 }) {
-  const [effectiveKeyword, setEffectiveKeyword] = useState<string>((keyword ?? "").trim());
-  const [effectiveGroup, setEffectiveGroup] = useState<string>(
-    (group ?? "female").trim() || "female",
-  );
-  const [effectiveAge, setEffectiveAge] = useState<number>(age || 20);
+  const [effectiveKeyword, setEffectiveKeyword] = useState<string>(() => {
+    const fromProp = (keyword ?? "").trim();
+    if (fromProp) return fromProp;
+    if (typeof window === "undefined") return "";
+    return (new URLSearchParams(window.location.search).get("keyword") ?? "").trim();
+  });
+  const [effectiveGroup, setEffectiveGroup] = useState<string>(() => {
+    const fromProp = (group ?? "female").trim() || "female";
+    if (typeof window === "undefined") return fromProp;
+    return (new URLSearchParams(window.location.search).get("group") ?? fromProp).trim() || "female";
+  });
+  const [effectiveAge, setEffectiveAge] = useState<number>(() => {
+    const fromProp = age || 20;
+    if (typeof window === "undefined") return fromProp;
+    return Number(new URLSearchParams(window.location.search).get("age") ?? String(fromProp)) || fromProp;
+  });
 
   // If this page was prerendered without query, hydrate from the real URL.
   useEffect(() => {
@@ -114,6 +125,7 @@ export function AnalysisClient({
   }, [safeKeyword, safeGroup, safeAge]);
 
   useEffect(() => {
+    if (!safeKeyword) return;
     void load();
   }, [load]);
 
