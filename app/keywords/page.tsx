@@ -172,37 +172,36 @@ export default function KeywordsPage() {
             ) : (
               <ul className="mt-4 space-y-3">
                 {data.items.map((item, idx) => (
-                  <li
-                    key={`${item.keyword}-${idx}`}
-                    className="flex items-center gap-4 rounded-xl border border-black/5 bg-white/50 px-3 py-2.5 dark:border-white/10 dark:bg-black/25"
-                  >
-                    <span className="w-8 shrink-0 text-center text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">
-                      {idx + 1}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <Link
-                          href={`/keywords/${encodeURIComponent(item.keyword)}?group=${encodeURIComponent(
-                            group,
-                          )}&age=${encodeURIComponent(String(age))}`}
-                          className="min-w-0 truncate text-left font-medium text-zinc-950 transition hover:underline hover:decoration-indigo-500/60 hover:underline-offset-4 dark:text-zinc-50"
-                          title="클릭해서 상세로 이동"
-                        >
-                          {item.keyword}
-                        </Link>
-                        <span className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
-                          {item.count}
-                        </span>
+                  <li key={`${item.keyword}-${idx}`}>
+                    <Link
+                      href={`/keywords/${encodeURIComponent(item.keyword)}?group=${encodeURIComponent(
+                        group,
+                      )}&age=${encodeURIComponent(String(age))}`}
+                      className="flex items-center gap-4 rounded-xl border border-black/5 bg-white/50 px-3 py-2.5 transition hover:bg-white/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 dark:border-white/10 dark:bg-black/25 dark:hover:bg-black/35"
+                      title="클릭해서 상세로 이동"
+                    >
+                      <span className="w-8 shrink-0 text-center text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="min-w-0 truncate text-left font-medium text-zinc-950 dark:text-zinc-50">
+                            {item.keyword}
+                          </span>
+                          <span className="shrink-0 text-sm tabular-nums text-zinc-600 dark:text-zinc-400">
+                            {item.count}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-indigo-500/80 to-emerald-500/60 transition-[width] duration-500"
+                            style={{
+                              width: `${Math.round((item.count / maxCount) * 100)}%`,
+                            }}
+                          />
+                        </div>
                       </div>
-                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-black/5 dark:bg-white/10">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-indigo-500/80 to-emerald-500/60 transition-[width] duration-500"
-                          style={{
-                            width: `${Math.round((item.count / maxCount) * 100)}%`,
-                          }}
-                        />
-                      </div>
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>

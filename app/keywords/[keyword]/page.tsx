@@ -43,7 +43,15 @@ export default function KeywordDetailPage({
   params: { keyword: string };
   searchParams?: { group?: string; age?: string };
 }) {
-  const keyword = useMemo(() => decodeURIComponent(params.keyword ?? ""), [params.keyword]);
+  const keyword = useMemo(() => {
+    const raw = params.keyword ?? "";
+    try {
+      // Next.js typically decodes route params already; guard against double-decoding.
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }, [params.keyword]);
   const group = searchParams?.group ?? "female";
   const age = Number(searchParams?.age ?? "20") || 20;
 
@@ -55,6 +63,9 @@ export default function KeywordDetailPage({
     setLoading(true);
     setError(null);
     try {
+      if (!keyword) {
+        throw new Error("keyword 파라미터가 비어있습니다.");
+      }
       const res = await apiGet<PostsSearchResponse>("/posts/search", {
         keyword,
         group,
