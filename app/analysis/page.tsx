@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type PostsSearchResponse = unknown;
 
@@ -35,25 +36,12 @@ function postUrl(p: unknown): string | null {
   return typeof u === "string" && u ? u : null;
 }
 
-export default function KeywordDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { keyword: string };
-  searchParams?: { group?: string; age?: string };
-}) {
-  const keyword = useMemo(() => {
-    const raw = params.keyword ?? "";
-    try {
-      // Params may already be decoded; guard decoding.
-      return decodeURIComponent(raw);
-    } catch {
-      return raw;
-    }
-  }, [params.keyword]);
+export default function AnalysisPage() {
+  const sp = useSearchParams();
 
-  const group = searchParams?.group ?? "female";
-  const age = Number(searchParams?.age ?? "20") || 20;
+  const keyword = useMemo(() => (sp.get("keyword") ?? "").trim(), [sp]);
+  const group = useMemo(() => (sp.get("group") ?? "female").trim() || "female", [sp]);
+  const age = useMemo(() => Number(sp.get("age") ?? "20") || 20, [sp]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +50,7 @@ export default function KeywordDetailPage({
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setPayload(null);
     try {
       if (!keyword) throw new Error("keyword 파라미터가 비어있습니다.");
 
@@ -77,6 +66,7 @@ export default function KeywordDetailPage({
       const token = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
       if (token) headers.Authorization = `Bearer ${token}`;
 
+      // API 호출은 /api로 시작하도록 고정
       const res = await fetch(`/api/posts/search?${qs}`, { method: "GET", headers });
       const text = await res.text();
       const data = text ? (JSON.parse(text) as unknown) : null;
@@ -88,7 +78,6 @@ export default function KeywordDetailPage({
           `요청에 실패했습니다. (${res.status} ${res.statusText})`;
         throw new Error(msg);
       }
-
       setPayload(data as PostsSearchResponse);
     } catch (e) {
       setPayload(null);
@@ -124,7 +113,7 @@ export default function KeywordDetailPage({
             <Link href="/keywords" className="hover:text-zinc-950 dark:hover:text-zinc-50">
               키워드보기
             </Link>
-            <span className="font-medium text-indigo-600 dark:text-indigo-400">상세</span>
+            <span className="font-medium text-indigo-600 dark:text-indigo-400">분석</span>
           </nav>
         </div>
       </header>
@@ -133,13 +122,16 @@ export default function KeywordDetailPage({
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50 sm:text-3xl">
-              “{keyword}”
+              키워드 분석
             </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
+              키워드: <span className="font-semibold text-zinc-900 dark:text-zinc-50">{keyword || "-"}</span>{" "}
+              · group={group} · age={age}
+            </p>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
               <code className="rounded bg-black/5 px-1.5 py-0.5 text-xs dark:bg-white/10">
                 GET /api/posts/search?keyword=&amp;group=&amp;age=&amp;limit=&amp;minutes=
-              </code>{" "}
-              결과를 불러옵니다. (group={group}, age={age})
+              </code>
             </p>
           </div>
           <button
