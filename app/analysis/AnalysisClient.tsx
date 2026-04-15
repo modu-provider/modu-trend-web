@@ -36,6 +36,13 @@ function clampPct(v: number) {
   return Math.max(0, Math.min(100, v));
 }
 
+function audienceLabel(group: string, age: number) {
+  const g = (group ?? "").toLowerCase();
+  const gender = g === "female" ? "여성" : g === "male" ? "남성" : g ? g : "전체";
+  const ageLabel = Number.isFinite(age) && age > 0 ? `${age}대` : "";
+  return `${ageLabel} ${gender}`.trim();
+}
+
 function DonutChart({
   positive,
   neutral,
@@ -253,12 +260,7 @@ export function AnalysisClient({
             <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
               키워드:{" "}
               <span className="font-semibold text-zinc-900 dark:text-zinc-50">{safeKeyword || "-"}</span>{" "}
-              · group={safeGroup} · age={safeAge}
-            </p>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-600 dark:text-zinc-400">
-              <code className="rounded bg-black/5 px-1.5 py-0.5 text-xs dark:bg-white/10">
-                GET /api/posts/search?keyword=&amp;group=&amp;age=&amp;limit=&amp;minutes=
-              </code>
+              · {audienceLabel(safeGroup, safeAge)}
             </p>
           </div>
           <button
@@ -288,8 +290,7 @@ export function AnalysisClient({
             {!payload ? (
               <p className="text-sm text-zinc-600 dark:text-zinc-400">표시할 데이터가 없습니다.</p>
             ) : (
-              <div className="grid gap-6 lg:grid-cols-5">
-                <div className="lg:col-span-2">
+              <div className="mx-auto max-w-xl">
                   <div className="rounded-2xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-black/30">
                     <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
                       감성 비율
@@ -331,41 +332,6 @@ export function AnalysisClient({
                       </div>
                     </div>
                   </div>
-                </div>
-
-                <div className="lg:col-span-3">
-                  <div className="rounded-2xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-black/30">
-                    <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">
-                      분석 요약
-                    </div>
-                    <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
-                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">키워드</div>
-                        <div className="mt-1 font-semibold text-zinc-950 dark:text-zinc-50">
-                          {payload.keyword}
-                        </div>
-                      </div>
-                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
-                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">대상</div>
-                        <div className="mt-1 font-semibold text-zinc-950 dark:text-zinc-50">
-                          {payload.group} · {payload.age}대
-                        </div>
-                      </div>
-                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
-                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">윈도우(분)</div>
-                        <div className="mt-1 font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
-                          {payload.window_minutes}
-                        </div>
-                      </div>
-                      <div className="rounded-xl border border-black/5 bg-white/70 p-3 text-sm dark:border-white/10 dark:bg-black/35">
-                        <div className="text-xs font-medium text-zinc-600 dark:text-zinc-400">매칭/분석 게시글</div>
-                        <div className="mt-1 font-semibold tabular-nums text-zinc-950 dark:text-zinc-50">
-                          {payload.matched_posts} / {payload.analyzed_posts}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
               </div>
             )}
           </div>
