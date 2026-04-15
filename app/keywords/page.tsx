@@ -176,7 +176,7 @@ export default function KeywordsPage() {
                     <Link
                       href={`/keywords/${encodeURIComponent(
                         item.keyword,
-                      )}?keyword=${encodeURIComponent(item.keyword)}&group=${encodeURIComponent(
+                      )}?group=${encodeURIComponent(
                         group,
                       )}&age=${encodeURIComponent(String(age))}`}
                       className="flex items-center gap-4 rounded-xl border border-black/5 bg-white/50 px-3 py-2.5 transition hover:bg-white/70 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/50 dark:border-white/10 dark:bg-black/25 dark:hover:bg-black/35"
