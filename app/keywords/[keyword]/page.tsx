@@ -41,17 +41,17 @@ export default function KeywordDetailPage({
   searchParams,
 }: {
   params: { keyword: string };
-  searchParams?: { group?: string; age?: string };
+  searchParams?: { group?: string; age?: string; keyword?: string };
 }) {
   const keyword = useMemo(() => {
-    const raw = params.keyword ?? "";
+    const raw = searchParams?.keyword ?? params.keyword ?? "";
     try {
       // Next.js typically decodes route params already; guard against double-decoding.
       return decodeURIComponent(raw);
     } catch {
       return raw;
     }
-  }, [params.keyword]);
+  }, [params.keyword, searchParams?.keyword]);
   const group = searchParams?.group ?? "female";
   const age = Number(searchParams?.age ?? "20") || 20;
 
