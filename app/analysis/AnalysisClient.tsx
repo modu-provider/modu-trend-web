@@ -15,6 +15,17 @@ type SearchAnalysisResponse = {
   negative_pct: number;
 };
 
+type NaverDatalabResponse = {
+  startDate: string;
+  endDate: string;
+  timeUnit: string;
+  results: {
+    title: string;
+    keywords: string[];
+    data: { period: string; ratio: number }[];
+  }[];
+};
+
 function isSearchAnalysisResponse(x: unknown): x is SearchAnalysisResponse {
   if (!x || typeof x !== "object") return false;
   const o = x as Record<string, unknown>;
@@ -129,6 +140,80 @@ function DonutChart({
   );
 }
 
+function TrendChart({ points }: { points: { period: string; ratio: number }[] }) {
+  const width = 640;
+  const height = 220;
+  const padX = 10;
+  const padY = 16;
+
+  const clean = points
+    .filter((p) => typeof p.period === "string" && Number.isFinite(p.ratio))
+    .map((p) => ({ period: p.period, ratio: Number(p.ratio) }));
+
+  if (clean.length === 0) {
+    return (
+      <div className="rounded-xl border border-black/5 bg-white/50 p-4 text-sm text-zinc-600 dark:border-white/10 dark:bg-black/25 dark:text-zinc-400">
+        그래프 데이터가 없습니다.
+      </div>
+    );
+  }
+
+  const min = Math.min(...clean.map((d) => d.ratio));
+  const max = Math.max(...clean.map((d) => d.ratio));
+  const range = Math.max(max - min, 1e-6);
+
+  const xFor = (i: number) =>
+    padX + (i / Math.max(clean.length - 1, 1)) * (width - padX * 2);
+  const yFor = (v: number) =>
+    padY + (1 - (v - min) / range) * (height - padY * 2);
+
+  const path = clean
+    .map((d, i) => `${i === 0 ? "M" : "L"} ${xFor(i).toFixed(2)} ${yFor(d.ratio).toFixed(2)}`)
+    .join(" ");
+
+  const area = `${path} L ${xFor(clean.length - 1).toFixed(2)} ${(height - padY).toFixed(
+    2,
+  )} L ${xFor(0).toFixed(2)} ${(height - padY).toFixed(2)} Z`;
+
+  const firstLabel = clean[0]?.period ?? "";
+  const lastLabel = clean[clean.length - 1]?.period ?? "";
+
+  return (
+    <div className="rounded-2xl border border-black/5 bg-white/60 p-4 dark:border-white/10 dark:bg-black/30">
+      <div className="flex items-baseline justify-between gap-3">
+        <div className="text-sm font-semibold text-zinc-950 dark:text-zinc-50">검색 트렌드</div>
+        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+          {firstLabel} ~ {lastLabel}
+        </div>
+      </div>
+
+      <div className="mt-3 overflow-hidden rounded-xl border border-black/5 bg-white/70 dark:border-white/10 dark:bg-black/35">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full">
+          <defs>
+            <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="rgba(99,102,241,0.35)" />
+              <stop offset="100%" stopColor="rgba(99,102,241,0.02)" />
+            </linearGradient>
+          </defs>
+
+          <path d={area} fill="url(#trendFill)" />
+          <path d={path} fill="none" stroke="rgba(99,102,241,0.9)" strokeWidth="3" />
+
+          {clean.map((d, i) => (
+            <circle
+              key={`${d.period}-${i}`}
+              cx={xFor(i)}
+              cy={yFor(d.ratio)}
+              r="2.8"
+              fill="rgba(16,185,129,0.9)"
+            />
+          ))}
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export function AnalysisClient({
   keyword,
   group,
@@ -178,6 +263,9 @@ export function AnalysisClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [payload, setPayload] = useState<SearchAnalysisResponse | null>(null);
+  const [trendLoading, setTrendLoading] = useState(false);
+  const [trendError, setTrendError] = useState<string | null>(null);
+  const [trend, setTrend] = useState<NaverDatalabResponse | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -221,9 +309,37 @@ export function AnalysisClient({
     }
   }, [safeKeyword, safeGroup, safeAge]);
 
+  const loadTrend = useCallback(async () => {
+    setTrendLoading(true);
+    setTrendError(null);
+    setTrend(null);
+    try {
+      if (!safeKeyword) throw new Error("keyword 파라미터가 비어있습니다.");
+      const res = await fetch(`/api/naver/datalab?keyword=${encodeURIComponent(safeKeyword)}`, {
+        method: "GET",
+        headers: { accept: "application/json" },
+      });
+      const text = await res.text();
+      const data = text ? (JSON.parse(text) as unknown) : null;
+      if (!res.ok) {
+        const msg =
+          (data && typeof data === "object" && (data as any).error) ||
+          `요청에 실패했습니다. (${res.status} ${res.statusText})`;
+        throw new Error(msg);
+      }
+      setTrend(data as NaverDatalabResponse);
+    } catch (e) {
+      setTrend(null);
+      setTrendError(e instanceof Error ? e.message : "불러오기에 실패했습니다.");
+    } finally {
+      setTrendLoading(false);
+    }
+  }, [safeKeyword]);
+
   useEffect(() => {
     if (!safeKeyword) return;
     void load();
+    void loadTrend();
   }, [load]);
 
   return (
@@ -331,6 +447,24 @@ export function AnalysisClient({
                         </div>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="mt-6">
+                    {trendError ? (
+                      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-800 dark:text-rose-300">
+                        {trendError}
+                      </div>
+                    ) : trendLoading ? (
+                      <div className="rounded-2xl border border-black/5 bg-white/50 p-4 text-sm text-zinc-600 dark:border-white/10 dark:bg-black/25 dark:text-zinc-400">
+                        검색 트렌드를 불러오는 중…
+                      </div>
+                    ) : trend?.results?.[0]?.data ? (
+                      <TrendChart points={trend.results[0].data} />
+                    ) : (
+                      <div className="rounded-xl border border-black/5 bg-white/50 p-4 text-sm text-zinc-600 dark:border-white/10 dark:bg-black/25 dark:text-zinc-400">
+                        검색 트렌드 데이터가 없습니다.
+                      </div>
+                    )}
                   </div>
               </div>
             )}
